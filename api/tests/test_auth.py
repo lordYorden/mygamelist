@@ -4,15 +4,16 @@ from collections.abc import Generator
 import jwt
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, text
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
+from sqlmodel import Session, SQLModel, create_engine, select
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["JWT_SECRET"] = "test-secret-with-enough-entropy"
 
 from app.config import get_settings  # noqa: E402
-from app.database import Base, get_db  # noqa: E402
+from app.database import get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from app.models import User  # noqa: E402
 
 
 @pytest.fixture()
@@ -21,23 +22,19 @@ def client() -> Generator[TestClient, None, None]:
     engine = create_engine(
         "sqlite+pysqlite:///:memory:",
         connect_args={"check_same_thread": False},
-        poolclass=__import__("sqlalchemy.pool").pool.StaticPool,
+        poolclass=StaticPool,
     )
-    TestingSessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-    Base.metadata.create_all(bind=engine)
+    SQLModel.metadata.create_all(bind=engine)
 
     def override_get_db() -> Generator[Session, None, None]:
-        db = TestingSessionLocal()
-        try:
+        with Session(engine) as db:
             yield db
-        finally:
-            db.close()
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
-    Base.metadata.drop_all(bind=engine)
+    SQLModel.metadata.drop_all(bind=engine)
 
 
 def register_payload(username: str, email: str) -> dict[str, str | bool]:
@@ -70,7 +67,7 @@ def test_password_is_argon2i_hash(client: TestClient) -> None:
 
     db = next(app.dependency_overrides[get_db]())
     try:
-        stored_hash = db.execute(text("select password_hash from users where username = 'alice'")).scalar_one()
+        stored_hash = db.exec(select(User.password_hash).where(User.username == "alice")).one()
     finally:
         db.close()
 

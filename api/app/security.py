@@ -7,8 +7,7 @@ from argon2.exceptions import VerifyMismatchError, VerificationError
 from argon2.low_level import Type
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import or_, select
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 
 from .config import Settings, get_settings
 from .database import get_db
@@ -71,9 +70,7 @@ def decode_access_token(token: str, settings: Settings) -> dict:
 
 def get_user_by_identifier(db: Session, identifier: str) -> User | None:
     normalized = identifier.strip()
-    return db.scalar(
-        select(User).where(or_(User.username == normalized, User.email == normalized.lower()))
-    )
+    return db.exec(select(User).where((User.username == normalized) | (User.email == normalized.lower()))).first()
 
 
 def get_current_user(

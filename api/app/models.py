@@ -2,10 +2,7 @@ from datetime import datetime, timezone
 from enum import StrEnum
 from uuid import uuid4
 
-from sqlalchemy import Boolean, DateTime, Enum, String, func
-from sqlalchemy.orm import Mapped, mapped_column
-
-from .database import Base
+from sqlmodel import Field, SQLModel
 
 
 class UserRole(StrEnum):
@@ -14,26 +11,15 @@ class UserRole(StrEnum):
     MODERATOR = "MODERATOR"
 
 
-class User(Base):
+class User(SQLModel, table=True):
     __tablename__ = "users"
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    username: Mapped[str] = mapped_column(String(40), nullable=False, unique=True, index=True)
-    email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    display_name: Mapped[str | None] = mapped_column(String(80), nullable=True)
-    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False, default=UserRole.GAMER)
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=lambda: datetime.now(timezone.utc),
-        server_default=func.now(),
-    )
-    updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        nullable=False,
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
-        server_default=func.now(),
-    )
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True, max_length=36)
+    username: str = Field(index=True, unique=True, nullable=False, max_length=40)
+    email: str = Field(index=True, unique=True, nullable=False, max_length=255)
+    password_hash: str = Field(nullable=False, max_length=255)
+    display_name: str | None = Field(default=None, max_length=80)
+    role: UserRole = Field(default=UserRole.GAMER, nullable=False)
+    is_active: bool = Field(default=True, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)

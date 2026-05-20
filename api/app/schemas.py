@@ -1,11 +1,12 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
+from pydantic import ConfigDict, EmailStr, Field, field_validator, model_validator
+from sqlmodel import SQLModel
 
 from .models import UserRole
 
 
-class RegisterRequest(BaseModel):
+class RegisterRequest(SQLModel):
     username: str = Field(min_length=3, max_length=40, pattern=r"^[A-Za-z0-9_.-]+$")
     email: EmailStr
     password: str = Field(min_length=12, max_length=128)
@@ -33,12 +34,12 @@ class RegisterRequest(BaseModel):
         return self
 
 
-class TokenRequest(BaseModel):
+class TokenRequest(SQLModel):
     username: str = Field(min_length=1, max_length=255)
     password: str = Field(min_length=1, max_length=128)
 
 
-class TokenResponse(BaseModel):
+class TokenResponse(SQLModel):
     access_token: str = Field(alias="accessToken")
     token_type: str = Field(default="Bearer", alias="tokenType")
     expires_in: int = Field(alias="expiresIn")
@@ -46,7 +47,7 @@ class TokenResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-class UserResponse(BaseModel):
+class UserResponse(SQLModel):
     id: str
     username: str
     email: EmailStr
@@ -57,6 +58,6 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
-class MessageResponse(BaseModel):
+class MessageResponse(SQLModel):
     success: bool
     message: str

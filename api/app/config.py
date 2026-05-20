@@ -71,11 +71,11 @@ def read_secret_json(client, secret_name: str) -> dict:
 
 def read_database_url(client, secret_name: str) -> str:
     secret = read_secret_json(client, secret_name)
-    if "sqlalchemy_url" in secret:
-        return secret["sqlalchemy_url"]
+    if "database_url" in secret:
+        return secret["database_url"]
     if {"url", "username", "password"} <= secret.keys():
         return build_postgres_url(secret["url"], secret["username"], secret["password"])
-    raise RuntimeError(f"Database secret {secret_name} must contain sqlalchemy_url or url/username/password")
+    raise RuntimeError(f"Database secret {secret_name} must contain database_url or url/username/password")
 
 
 def build_postgres_url(url: str, username: str, password: str) -> str:

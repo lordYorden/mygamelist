@@ -3,9 +3,8 @@ from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, status
-from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlmodel import Session, select
 
 from .config import Settings, get_settings
 from .database import get_db, init_db
@@ -33,13 +32,13 @@ def register(request: RegisterRequest, db: Annotated[Session, Depends(get_db)]) 
     username = request.username.strip()
     email = request.email.lower()
 
-    existing = db.scalar(select(User).where(or_(User.username == username, User.email == email)))
+    existing = db.exec(select(User).where((User.username == username) | (User.email == email))).first()
     if existing is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Username or email already exists")
 
     with db.begin_nested():
-        user_count = db.scalar(select(func.count(User.id))) or 0
-        role = UserRole.ADMIN if user_count == 0 else UserRole.GAMER
+        first_user = db.exec(select(User.id).limit(1)).first()
+        role = UserRole.ADMIN if first_user is None else UserRole.GAMER
         user = User(
             username=username,
             email=email,

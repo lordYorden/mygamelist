@@ -13,14 +13,14 @@ create_or_update_secret() {
 }
 
 create_or_update_secret "mygamelist/db" '{
-  "sqlalchemy_url": "postgresql+psycopg://mygamelist:mygamelist@localhost:5432/mygamelist",
+  "database_url": "postgresql+psycopg://mygamelist:mygamelist@localhost:5432/mygamelist",
   "url": "jdbc:postgresql://localhost:5432/mygamelist",
   "username": "mygamelist",
   "password": "mygamelist"
 }'
 
 create_or_update_secret "mygamelist/db-docker" '{
-  "sqlalchemy_url": "postgresql+psycopg://mygamelist:mygamelist@postgres:5432/mygamelist",
+  "database_url": "postgresql+psycopg://mygamelist:mygamelist@postgres:5432/mygamelist",
   "url": "jdbc:postgresql://postgres:5432/mygamelist",
   "username": "mygamelist",
   "password": "mygamelist"
