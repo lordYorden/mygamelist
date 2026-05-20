@@ -1,4 +1,3 @@
-import os
 from collections.abc import Generator
 
 import jwt
@@ -7,13 +6,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine, select
 
-os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
-os.environ["JWT_SECRET"] = "test-secret-with-enough-entropy"
-
-from app.config import get_settings  # noqa: E402
-from app.database import get_db  # noqa: E402
-from app.main import app  # noqa: E402
-from app.models import User  # noqa: E402
+from app.config import get_settings
+from app.database import get_db
+from app.main import app
+from app.models import User
 
 
 @pytest.fixture()

@@ -1,4 +1,5 @@
 from collections.abc import Generator
+from importlib import import_module
 
 from sqlmodel import Session, SQLModel, create_engine
 
@@ -14,6 +15,6 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    from . import models  # noqa: F401
+    import_module(".models", package=__package__)
 
     SQLModel.metadata.create_all(bind=engine)
