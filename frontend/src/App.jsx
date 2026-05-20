@@ -8,7 +8,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 
 function RequireAuth({ ready, user, children }) {
   if (!ready) {
-    return <main className="loading-page">Loading...</main>;
+    return <main className="grid min-h-screen place-items-center text-muted-foreground">Loading...</main>;
   }
   if (!user) {
     return <Navigate to="/login" replace />;

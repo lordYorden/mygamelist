@@ -15,9 +15,9 @@ export function DashboardPage({ user, onLogout }) {
   }
 
   return (
-    <main className="app-shell">
-      <nav className="topbar">
-        <Link className="brand-link compact" to="/dashboard">
+    <main className="mx-auto w-[min(1120px,calc(100vw-32px))] py-7 pb-11">
+      <nav className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+        <Link className="inline-flex w-fit items-center gap-2.5 text-lg font-extrabold text-foreground hover:no-underline" to="/dashboard">
           <Library size={24} />
           <span>MyGameList</span>
         </Link>
@@ -25,21 +25,21 @@ export function DashboardPage({ user, onLogout }) {
           <LogOut size={16} /> Log out
         </Button>
       </nav>
-      <section className="dashboard-grid">
-        <Card>
+      <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)]">
+        <Card className="max-w-none">
           <CardHeader>
             <CardTitle><ShieldCheck size={20} /> Dashboard</CardTitle>
             <CardDescription>Signed in as {user.displayName || user.username}</CardDescription>
           </CardHeader>
           <CardContent>
-            <dl className="details-list">
-              <div><dt>Username</dt><dd>{user.username}</dd></div>
-              <div><dt>Email</dt><dd>{user.email}</dd></div>
-              <div><dt>Role</dt><dd>{user.role}</dd></div>
+            <dl className="grid gap-2.5">
+              <div className="grid gap-1 border-b pb-2.5 sm:flex sm:justify-between sm:gap-4"><dt className="text-muted-foreground">Username</dt><dd className="m-0 [overflow-wrap:anywhere] font-extrabold">{user.username}</dd></div>
+              <div className="grid gap-1 border-b pb-2.5 sm:flex sm:justify-between sm:gap-4"><dt className="text-muted-foreground">Email</dt><dd className="m-0 [overflow-wrap:anywhere] font-extrabold">{user.email}</dd></div>
+              <div className="grid gap-1 border-b pb-2.5 sm:flex sm:justify-between sm:gap-4"><dt className="text-muted-foreground">Role</dt><dd className="m-0 [overflow-wrap:anywhere] font-extrabold">{user.role}</dd></div>
             </dl>
           </CardContent>
         </Card>
-        <Card className="feature-card">
+        <Card className="min-h-44 max-w-none">
           <CardHeader>
             <CardTitle>Next feature slice</CardTitle>
             <CardDescription>Game list endpoints can now follow the protected BFF proxy pattern.</CardDescription>

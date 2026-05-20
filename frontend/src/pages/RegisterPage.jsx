@@ -68,13 +68,13 @@ export function RegisterPage() {
           <CardDescription>Passwords are hashed with salted Argon2i before storage.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form id="register-form" className="stack" onSubmit={submit}>
+          <form id="register-form" className="grid gap-3.5" onSubmit={submit}>
             <FormField id="username" label="Username" value={form.username} onChange={update} autoComplete="username" required />
             <FormField id="email" label="Email" type="email" value={form.email} onChange={update} autoComplete="email" required />
             <FormField id="displayName" label="Display name" value={form.displayName} onChange={update} autoComplete="nickname" />
             <FormField id="password" label="Password" type="password" value={form.password} onChange={update} autoComplete="new-password" required />
             <FormField id="confirmPassword" label="Confirm password" type="password" value={form.confirmPassword} onChange={update} autoComplete="new-password" required />
-            <div className="check-row">
+            <div className="flex items-center gap-2.5">
               <Checkbox id="termsAccepted" name="termsAccepted" checked={form.termsAccepted} onChange={update} />
               <Label htmlFor="termsAccepted">I agree to the terms of service</Label>
             </div>
@@ -96,7 +96,7 @@ export function RegisterPage() {
           <Button form="register-form" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Creating..." : "Create account"}
           </Button>
-          <p className="form-link">
+          <p className="text-center text-muted-foreground">
             Already registered? <Link to="/login">Log in</Link>
           </p>
         </CardFooter>

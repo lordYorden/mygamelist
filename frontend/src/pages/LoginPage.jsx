@@ -50,7 +50,7 @@ export function LoginPage({ onAuthenticated }) {
           <CardDescription>Use your username or email address.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form id="login-form" className="stack" onSubmit={submit}>
+          <form id="login-form" className="grid gap-3.5" onSubmit={submit}>
             <FormField
               id="username"
               label="Email or username"
@@ -80,7 +80,7 @@ export function LoginPage({ onAuthenticated }) {
           <Button form="login-form" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Signing in..." : "Sign in"}
           </Button>
-          <p className="form-link">
+          <p className="text-center text-muted-foreground">
             New here? <Link to="/register">Create an account</Link>
           </p>
         </CardFooter>
