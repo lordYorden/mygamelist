@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: mygamelist
+      POSTGRES_USER: mygamelist
+      POSTGRES_PASSWORD: mygamelist
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mygamelist -d mygamelist"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  localstack:
+    image: localstack/localstack:3.4
+    environment:
+      SERVICES: secretsmanager
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "4566:4566"
+    volumes:
+      - ./localstack/init:/etc/localstack/init/ready.d
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: ./api
+    environment:
+      JWT_ISSUER: mygamelist-api
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      SECRETS_MANAGER_ENDPOINT: http://localstack:4566
+      DB_SECRET_NAME: mygamelist/db-docker
+      JWT_SECRET_NAME: mygamelist/jwt
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+
+  bff:
+    build:
+      context: .
+      dockerfile: bff/Dockerfile
+    environment:
+      API_BASE_URL: http://api:8000
+      COOKIE_SECURE: "false"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+
+volumes:
+  postgres-data:
