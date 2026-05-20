@@ -30,9 +30,11 @@ The API container reads `DB_SECRET_NAME` and `JWT_SECRET_NAME` and refuses to st
 ## Local Tests
 
 ```bash
-pip install -r api/requirements.txt
-pytest api/tests
+cd api
+uv sync
+uv run pytest tests
 
-pip install -r bff/requirements.txt
-pytest bff/tests
+cd ../bff
+uv sync
+uv run pytest tests
 ```
