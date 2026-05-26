@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Library, LogOut, ShieldCheck } from "lucide-react";
+import { Library, LogOut, ShieldCheck, Users } from "lucide-react";
 
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
@@ -21,9 +21,18 @@ export function DashboardPage({ user, onLogout }) {
           <Library size={24} />
           <span>MyGameList</span>
         </Link>
-        <Button variant="secondary" size="sm" onClick={logout}>
-          <LogOut size={16} /> Log out
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {user.role === "ADMIN" ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link to="/admin">
+                <Users size={16} /> Admin
+              </Link>
+            </Button>
+          ) : null}
+          <Button variant="secondary" size="sm" onClick={logout}>
+            <LogOut size={16} /> Log out
+          </Button>
+        </div>
       </nav>
       <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(280px,0.7fr)]">
         <Card className="max-w-none">
@@ -41,8 +50,12 @@ export function DashboardPage({ user, onLogout }) {
         </Card>
         <Card className="min-h-44 max-w-none">
           <CardHeader>
-            <CardTitle>Next feature slice</CardTitle>
-            <CardDescription>Game list endpoints can now follow the protected BFF proxy pattern.</CardDescription>
+            <CardTitle>{user.role === "ADMIN" ? "Admin access" : "Next feature slice"}</CardTitle>
+            <CardDescription>
+              {user.role === "ADMIN"
+                ? "User management is available from the admin panel."
+                : "Game list endpoints can now follow the protected BFF proxy pattern."}
+            </CardDescription>
           </CardHeader>
         </Card>
       </section>

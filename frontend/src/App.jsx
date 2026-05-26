@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { apiJson } from "./lib/api";
+import { AdminPage } from "./pages/AdminPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
@@ -12,6 +13,19 @@ function RequireAuth({ ready, user, children }) {
   }
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  return children;
+}
+
+function RequireAdmin({ ready, user, children }) {
+  if (!ready) {
+    return <main className="grid min-h-screen place-items-center text-muted-foreground">Loading...</main>;
+  }
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  if (user.role !== "ADMIN") {
+    return <Navigate to="/dashboard" replace />;
   }
   return children;
 }
@@ -41,6 +55,14 @@ export function App() {
           <RequireAuth ready={ready} user={user}>
             <DashboardPage user={user} onLogout={() => setUser(null)} />
           </RequireAuth>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <RequireAdmin ready={ready} user={user}>
+            <AdminPage user={user} onLogout={() => setUser(null)} />
+          </RequireAdmin>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />

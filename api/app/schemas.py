@@ -47,6 +47,12 @@ class TokenResponse(SQLModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
+class RoleChangeRequest(SQLModel):
+    role: UserRole
+
+    model_config = ConfigDict(extra="forbid")
+
+
 class UserResponse(SQLModel):
     id: str
     username: str

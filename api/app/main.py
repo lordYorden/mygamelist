@@ -6,10 +6,11 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
+from .admin import change_user_role, list_all_users, require_role
 from .config import Settings, get_settings
 from .database import get_db, init_db
 from .models import User, UserRole
-from .schemas import RegisterRequest, TokenRequest, TokenResponse, UserResponse
+from .schemas import RegisterRequest, RoleChangeRequest, TokenRequest, TokenResponse, UserResponse
 from .security import create_access_token, get_current_user, get_user_by_identifier, hash_password, verify_password
 
 
@@ -75,6 +76,24 @@ def issue_token(
 @app.get("/api/me", response_model=UserResponse)
 def me(current_user: Annotated[User, Depends(get_current_user)]) -> User:
     return current_user
+
+
+@app.get("/api/admin/users", response_model=list[UserResponse])
+def admin_list_users(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+) -> list[User]:
+    return list_all_users(db, current_user)
+
+
+@app.patch("/api/admin/users/{user_id}/role", response_model=UserResponse)
+def admin_change_user_role(
+    user_id: str,
+    request: RoleChangeRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(require_role(UserRole.ADMIN))],
+) -> User:
+    return change_user_role(db, current_user, user_id, request.role)
 
 
 @app.delete("/api/game-entries/{entry_id}")

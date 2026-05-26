@@ -26,6 +26,8 @@ class FakeAsyncClient:
 
     async def request(self, method: str, path: str, **kwargs) -> httpx.Response:
         if kwargs["headers"].get("Authorization") == "Bearer api.jwt.token":
+            if method == "PATCH" and path == "/api/admin/users/user-2/role":
+                return httpx.Response(200, json={"id": "user-2", "username": "bob", "role": "MODERATOR"})
             return httpx.Response(200, json={"username": "alice", "role": "ADMIN"})
         return httpx.Response(401, json={"detail": "Not authenticated"})
 
@@ -60,6 +62,15 @@ def test_proxy_requires_session_then_adds_bearer_token(client: TestClient) -> No
 
     assert response.status_code == 200
     assert response.json()["username"] == "alice"
+
+
+def test_proxy_forwards_admin_patch_with_session_token(client: TestClient) -> None:
+    client.post("/login", data={"username": "alice", "password": "StrongerPass123!"})
+
+    response = client.patch("/api/admin/users/user-2/role", json={"role": "MODERATOR"})
+
+    assert response.status_code == 200
+    assert response.json() == {"id": "user-2", "username": "bob", "role": "MODERATOR"}
 
 
 def test_logout_clears_session(client: TestClient) -> None:
