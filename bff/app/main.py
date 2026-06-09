@@ -7,9 +7,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import Settings, get_settings
+from .csrf import CsrfMiddleware
 from .sessions import session_store
 
 app = FastAPI(title="MyGameList BFF")
+app.add_middleware(CsrfMiddleware)
 frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
 

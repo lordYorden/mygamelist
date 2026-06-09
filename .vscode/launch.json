@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach API",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 5678
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/api",
+          "remoteRoot": "/app"
+        }
+      ]
+    },
+    {
+      "name": "Attach BFF",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 5679
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}/bff",
+          "remoteRoot": "/app/bff"
+        }
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Attach API + BFF",
+      "configurations": ["Attach API", "Attach BFF"]
+    }
+  ]
+}

@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     api_base_url: str = Field(default="http://localhost:8000")
     cookie_name: str = Field(default="BFF-SESSION")
     cookie_secure: bool = Field(default=False)
+    csrf_cookie_name: str = Field(default="XSRF-TOKEN")
+    csrf_header_name: str = Field(default="X-XSRF-TOKEN")
+    csrf_form_field: str = Field(default="_csrf")
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -33,6 +33,7 @@ services:
   api:
     build:
       context: ./api
+    command: ["uv", "run", "--with", "debugpy", "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     environment:
       JWT_ISSUER: mygamelist-api
       AWS_REGION: us-east-1
@@ -43,6 +44,7 @@ services:
       JWT_SECRET_NAME: mygamelist/jwt
     ports:
       - "8000:8000"
+      - "5678:5678"
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,11 +55,13 @@ services:
     build:
       context: .
       dockerfile: bff/Dockerfile
+    command: ["uv", "run", "--with", "debugpy", "python", "-m", "debugpy", "--listen", "0.0.0.0:5679", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
     environment:
       API_BASE_URL: http://api:8000
       COOKIE_SECURE: "false"
     ports:
       - "8080:8080"
+      - "5679:5679"
     depends_on:
       - api
 
