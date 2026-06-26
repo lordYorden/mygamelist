@@ -18,7 +18,7 @@ services:
   localstack:
     image: localstack/localstack:3.4
     environment:
-      SERVICES: secretsmanager
+      SERVICES: secretsmanager,s3
       AWS_DEFAULT_REGION: us-east-1
     ports:
       - "4566:4566"
@@ -40,6 +40,8 @@ services:
       AWS_ACCESS_KEY_ID: test
       AWS_SECRET_ACCESS_KEY: test
       SECRETS_MANAGER_ENDPOINT: http://localstack:4566
+      S3_ENDPOINT_URL: http://localstack:4566
+      UPLOADS_BUCKET: mygamelist-uploads
       DB_SECRET_NAME: mygamelist/db-docker
       JWT_SECRET_NAME: mygamelist/jwt
     ports:

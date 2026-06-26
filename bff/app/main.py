@@ -69,7 +69,19 @@ async def proxy_api(
     request: Request,
     settings: Annotated[Settings, Depends(get_settings)],
 ) -> Response:
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            declared_length = int(content_length)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid Content-Length") from exc
+        if declared_length > settings.max_api_body_bytes:
+            raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Request body too large")
+
     body = await request.body()
+    if len(body) > settings.max_api_body_bytes:
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Request body too large")
+
     headers = {
         key: value
         for key, value in request.headers.items()

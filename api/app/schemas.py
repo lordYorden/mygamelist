@@ -58,6 +58,7 @@ class UserResponse(SQLModel):
     username: str
     email: EmailStr
     display_name: str | None = Field(alias="displayName")
+    profile_picture_url: str | None = Field(default=None, alias="profilePictureUrl")
     role: UserRole
     created_at: datetime = Field(alias="createdAt")
 

@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     aws_access_key_id: str | None = Field(default=None)
     aws_secret_access_key: str | None = Field(default=None)
     secrets_manager_endpoint: str | None = Field(default=None)
+    s3_endpoint_url: str | None = Field(default=None)
+    uploads_bucket: str = Field(default="mygamelist-uploads")
     db_secret_name: str | None = Field(default=None)
     jwt_secret_name: str | None = Field(default=None)
 

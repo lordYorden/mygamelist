@@ -2,16 +2,27 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
 
 from .admin import change_user_role, list_all_users, require_role
 from .config import Settings, get_settings
 from .database import get_db, init_db
-from .models import User, UserRole
+from .models import Upload, User, UserRole
 from .schemas import RegisterRequest, RoleChangeRequest, TokenRequest, TokenResponse, UserResponse
 from .security import create_access_token, get_current_user, get_user_by_identifier, hash_password, verify_password
+from .uploads import (
+    check_profile_picture_rate_limit,
+    get_upload_object,
+    logger as upload_logger,
+    profile_picture_storage_key,
+    put_upload_object,
+    read_profile_picture_content,
+    sanitize_profile_picture,
+    validate_profile_picture,
+)
 
 
 @asynccontextmanager
@@ -76,6 +87,63 @@ def issue_token(
 @app.get("/api/me", response_model=UserResponse)
 def me(current_user: Annotated[User, Depends(get_current_user)]) -> User:
     return current_user
+
+
+@app.post("/api/me/profile-picture", response_model=UserResponse)
+async def upload_profile_picture(
+    file: Annotated[UploadFile, File()],
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> User:
+    check_profile_picture_rate_limit(current_user.id)
+    content = await read_profile_picture_content(file)
+    content_type = validate_profile_picture(file, content)
+    content = sanitize_profile_picture(content, content_type)
+    storage_key = profile_picture_storage_key(current_user.id, content_type)
+
+    put_upload_object(settings, storage_key, content, content_type)
+
+    upload = Upload(
+        owner_user_id=current_user.id,
+        upload_type="profile_picture",
+        original_filename=file.filename,
+        storage_key=storage_key,
+        content_type=content_type,
+        size_bytes=len(content),
+    )
+    db.add(upload)
+    db.flush()
+
+    current_user.profile_picture_upload_id = upload.id
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    upload_logger.info(
+        "profile_picture_upload_success user_id=%s upload_id=%s size_bytes=%s content_type=%s",
+        current_user.id,
+        upload.id,
+        len(content),
+        content_type,
+    )
+    return current_user
+
+
+@app.get("/api/me/profile-picture")
+def get_profile_picture(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    settings: Annotated[Settings, Depends(get_settings)],
+) -> StreamingResponse:
+    if current_user.profile_picture_upload_id is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile picture not found")
+
+    upload = db.get(Upload, current_user.profile_picture_upload_id)
+    if upload is None or upload.owner_user_id != current_user.id or upload.upload_type != "profile_picture":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile picture not found")
+
+    body, content_type = get_upload_object(settings, upload.storage_key)
+    return StreamingResponse(body, media_type=content_type)
 
 
 @app.get("/api/admin/users", response_model=list[UserResponse])
