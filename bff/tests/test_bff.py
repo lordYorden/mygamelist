@@ -193,6 +193,54 @@ def test_admin_patch_rejects_wrong_csrf_token(client: TestClient) -> None:
     assert FakeAsyncClient.proxied_requests == []
 
 
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("post", "/api/webhooks"),
+        ("post", "/api/webhooks/webhook-1/test"),
+        ("delete", "/api/webhooks/webhook-1"),
+    ],
+)
+def test_webhook_mutations_reject_missing_csrf_token(method: str, path: str, client: TestClient) -> None:
+    login(client)
+    FakeAsyncClient.proxied_requests.clear()
+    client.cookies.delete("XSRF-TOKEN")
+
+    request = getattr(client, method)
+    kwargs = (
+        {"json": {"title": "Slack alerts", "url": "https://hooks.slack.com/services/test"}}
+        if method == "post" and path == "/api/webhooks"
+        else {}
+    )
+    response = request(path, **kwargs)
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "CSRF token missing or invalid"}
+    assert FakeAsyncClient.proxied_requests == []
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("post", "/api/webhooks"),
+        ("post", "/api/webhooks/webhook-1/test"),
+        ("delete", "/api/webhooks/webhook-1"),
+    ],
+)
+def test_webhook_mutations_proxy_with_valid_csrf_and_session(method: str, path: str, client: TestClient) -> None:
+    login(client)
+    FakeAsyncClient.proxied_requests.clear()
+
+    request = getattr(client, method)
+    kwargs = {"headers": csrf_headers(client)}
+    if method == "post" and path == "/api/webhooks":
+        kwargs["json"] = {"title": "Slack alerts", "url": "https://hooks.slack.com/services/test"}
+    response = request(path, **kwargs)
+
+    assert response.status_code == 200
+    assert FakeAsyncClient.proxied_requests == [(method.upper(), path)]
+
+
 def test_register_rejects_missing_csrf_token(client: TestClient) -> None:
     response = client.post(
         "/api/register",

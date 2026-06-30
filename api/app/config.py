@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     uploads_bucket: str = Field(default="mygamelist-uploads")
     db_secret_name: str | None = Field(default=None)
     jwt_secret_name: str | None = Field(default=None)
+    ssrf_allowed_domains: str = Field(
+        default="hooks.slack.com,discord.com,webhook.office.com,hooks.zapier.com,api.pagerduty.com"
+    )
+    webhook_connect_timeout_seconds: float = Field(default=5.0)
+    webhook_read_timeout_seconds: float = Field(default=10.0)
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

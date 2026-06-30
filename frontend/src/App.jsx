@@ -6,6 +6,7 @@ import { AdminPage } from "./pages/AdminPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LoginPage } from "./pages/LoginPage";
 import { RegisterPage } from "./pages/RegisterPage";
+import { SettingsPage } from "./pages/SettingsPage";
 
 function RequireAuth({ ready, user, children }) {
   if (!ready) {
@@ -63,6 +64,14 @@ export function App() {
           <RequireAdmin ready={ready} user={user}>
             <AdminPage user={user} onLogout={() => setUser(null)} />
           </RequireAdmin>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <RequireAuth ready={ready} user={user}>
+            <SettingsPage user={user} onLogout={() => setUser(null)} />
+          </RequireAuth>
         }
       />
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,4 +1,5 @@
 from datetime import datetime
+from urllib.parse import urlsplit
 
 from pydantic import ConfigDict, EmailStr, Field, field_validator, model_validator
 from sqlmodel import SQLModel
@@ -68,3 +69,46 @@ class UserResponse(SQLModel):
 class MessageResponse(SQLModel):
     success: bool
     message: str
+
+
+class WebhookRequest(SQLModel):
+    title: str = Field(min_length=1, max_length=80)
+    url: str = Field(min_length=1, max_length=2048)
+
+    @field_validator("title")
+    @classmethod
+    def validate_title(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("title is required")
+        return stripped
+
+    @field_validator("url")
+    @classmethod
+    def validate_absolute_url(cls, value: str) -> str:
+        stripped = value.strip()
+        try:
+            parsed = urlsplit(stripped)
+            _ = parsed.hostname
+            _ = parsed.port
+        except ValueError as exc:
+            raise ValueError("url must be a valid absolute URL") from exc
+        if not parsed.scheme or not parsed.netloc or parsed.hostname is None:
+            raise ValueError("url must be an absolute URL with a host")
+        return stripped
+
+
+class WebhookResponse(SQLModel):
+    id: str
+    title: str
+    url: str
+    created_at: datetime = Field(alias="createdAt")
+
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+
+
+class WebhookTestResult(SQLModel):
+    target_status: int | None = Field(default=None, alias="targetStatus")
+    message: str
+
+    model_config = ConfigDict(populate_by_name=True)

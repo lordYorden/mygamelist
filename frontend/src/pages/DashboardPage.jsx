@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Camera, Library, LogOut, ShieldCheck, Upload, Users } from "lucide-react";
+import { Camera, Library, LogOut, Settings, ShieldCheck, Upload, Users } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { Button } from "../components/ui/button";
@@ -71,6 +71,11 @@ export function DashboardPage({ user, onLogout }) {
               </Link>
             </Button>
           ) : null}
+          <Button asChild variant="secondary" size="sm">
+            <Link to="/settings">
+              <Settings size={16} /> Settings
+            </Link>
+          </Button>
           <Button variant="secondary" size="sm" onClick={logout}>
             <LogOut size={16} /> Log out
           </Button>

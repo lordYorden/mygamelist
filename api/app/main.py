@@ -2,7 +2,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile, status
+from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
@@ -11,8 +11,18 @@ from .admin import change_user_role, list_all_users, require_role
 from .config import Settings, get_settings
 from .database import get_db, init_db
 from .models import Upload, User, UserRole
-from .schemas import RegisterRequest, RoleChangeRequest, TokenRequest, TokenResponse, UserResponse
+from .schemas import (
+    RegisterRequest,
+    RoleChangeRequest,
+    TokenRequest,
+    TokenResponse,
+    UserResponse,
+    WebhookRequest,
+    WebhookResponse,
+    WebhookTestResult,
+)
 from .security import create_access_token, get_current_user, get_user_by_identifier, hash_password, verify_password
+from .ssrf import BlockedUrlError
 from .uploads import (
     check_profile_picture_rate_limit,
     get_upload_object,
@@ -23,6 +33,7 @@ from .uploads import (
     sanitize_profile_picture,
     validate_profile_picture,
 )
+from .webhooks import WebhookService, get_webhook_service
 
 
 @asynccontextmanager
@@ -164,8 +175,65 @@ def admin_change_user_role(
     return change_user_role(db, current_user, user_id, request.role)
 
 
+@app.post("/api/webhooks", response_model=WebhookResponse, status_code=status.HTTP_201_CREATED)
+def create_webhook(
+    request: WebhookRequest,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    webhook_service: Annotated[WebhookService, Depends(get_webhook_service)],
+) -> WebhookResponse:
+    try:
+        return webhook_service.create_webhook(db, current_user, request)
+    except BlockedUrlError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+
+@app.get("/api/webhooks", response_model=list[WebhookResponse])
+def list_webhooks(
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    webhook_service: Annotated[WebhookService, Depends(get_webhook_service)],
+) -> list[WebhookResponse]:
+    return webhook_service.list_webhooks(db, current_user)
+
+
+@app.delete("/api/webhooks/{webhook_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_webhook(
+    webhook_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    webhook_service: Annotated[WebhookService, Depends(get_webhook_service)],
+) -> Response:
+    webhook_service.delete_webhook(db, current_user, webhook_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@app.post("/api/webhooks/{webhook_id}/test", response_model=WebhookTestResult)
+def test_webhook(
+    webhook_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    webhook_service: Annotated[WebhookService, Depends(get_webhook_service)],
+) -> WebhookTestResult:
+    try:
+        return webhook_service.test_webhook(db, current_user, webhook_id)
+    except BlockedUrlError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+
+
 @app.delete("/api/game-entries/{entry_id}")
-def delete_game_entry(entry_id: str, current_user: Annotated[User, Depends(get_current_user)]) -> dict[str, str | bool]:
+def delete_game_entry(
+    entry_id: str,
+    db: Annotated[Session, Depends(get_db)],
+    current_user: Annotated[User, Depends(get_current_user)],
+    webhook_service: Annotated[WebhookService, Depends(get_webhook_service)],
+) -> dict[str, str | bool]:
+    webhook_service.send_event(
+        db,
+        current_user,
+        "game_entry.deleted",
+        {"entryId": entry_id, "userId": current_user.id, "username": current_user.username},
+    )
     return {
         "success": True,
         "message": f"Protected delete pattern accepted for entry {entry_id} by {current_user.username}.",

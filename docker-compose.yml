@@ -44,6 +44,7 @@ services:
       UPLOADS_BUCKET: mygamelist-uploads
       DB_SECRET_NAME: mygamelist/db-docker
       JWT_SECRET_NAME: mygamelist/jwt
+      SSRF_ALLOWED_DOMAINS: hooks.slack.com,discord.com,webhook.office.com,hooks.zapier.com,api.pagerduty.com
     ports:
       - "8000:8000"
       - "5678:5678"

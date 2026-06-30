@@ -43,3 +43,14 @@ class Upload(SQLModel, table=True):
     content_type: str = Field(nullable=False, max_length=80)
     size_bytes: int = Field(nullable=False)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class Webhook(SQLModel, table=True):
+    __tablename__ = "webhooks"
+
+    id: str = Field(default_factory=lambda: str(uuid4()), primary_key=True, max_length=36)
+    owner_user_id: str = Field(foreign_key="users.id", index=True, nullable=False, max_length=36)
+    title: str = Field(default="Untitled webhook", nullable=False, max_length=80)
+    url: str = Field(nullable=False, max_length=2048)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
